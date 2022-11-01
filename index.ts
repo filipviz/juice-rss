@@ -13,6 +13,8 @@ const query = `{
     metadataUri
     createdAt
     owner
+    currentBalance
+    handle
   }
 }`;
 
@@ -42,7 +44,7 @@ async function serveHttp(conn: Deno.Conn) {
     <atom:link href="http://juice-rss.deno.dev/" rel="self" type="application/rss+xml"/>`;
     
     // Add items
-    for(const { projectId, metadataUri, createdAt, owner } of answer.data.projects){
+    for(const { projectId, metadataUri, createdAt, owner, currentBalance, handle } of answer.data.projects){
       // Fetch IPFS metadata
       const ipfsRes = await fetch(`${metadataApi}/${metadataUri}`);
       const metadata = await ipfsRes.json();
@@ -51,11 +53,12 @@ async function serveHttp(conn: Deno.Conn) {
       body += `<item>
       <title>${projectId}: ${metadata.name}</title>
       <link>https://juicebox.money/v2/p/${projectId}/</link>
-      <description>`
-      if(metadata.description){ body += `Description: ${metadata.description}&lt;br&gt;&lt;br/&gt;`; }
-      if(metadata.payDisclosure){ body += `Disclosure: ${metadata.payDisclosure}&lt;br/&gt;&lt;br/&gt;`; }
-      if(metadata.twitter){ body += `Twitter: &lt;a href='https://twitter.com/${metadata.twitter}'&gt;@${metadata.twitter} &lt;/a&gt;`; }
-      if(metadata.discord){ body += `Discord: &lt;a href='${metadata.discord}'&gt;${metadata.discord}&lt;/a&gt;`; }
+      <description>Current balance: ${currentBalance / 1000000000000000000 } ETH&lt;br&gt;`
+      if(handle){body += `Handle: ${handle}&lt;br&gt;`; }
+      if(metadata.description){ body += `&lt;br&gt;Description: ${metadata.description}&lt;br&gt;`; }
+      if(metadata.payDisclosure){ body += `&lt;br/&gt;Disclosure: ${metadata.payDisclosure}&lt;br/&gt;&lt;br/&gt;`; }
+      if(metadata.twitter){ body += `Twitter: &lt;a href='https://twitter.com/${metadata.twitter}'&gt;@${metadata.twitter}&lt;/a&gt;`; }
+      if(metadata.discord){ body += ` Discord: &lt;a href='${metadata.discord}'&gt;${metadata.discord}&lt;/a&gt;`; }
       body += `</description>
       <author>${owner}</author>
       <guid>${projectId}</guid>
