@@ -1,7 +1,12 @@
 const server = Deno.listen({ port: 80 });
 
+// IPFS Gateway
 const metadataApi = `https://jbx.mypinata.cloud/ipfs`
+
+// GraphQL API
 const graphApi = 'https://api.studio.thegraph.com/query/30654/mainnet-dev/0.5.0'
+
+// GraphQL query
 const query = `{
   projects(first: 5, orderBy: createdAt, orderDirection: desc){
     projectId
@@ -18,6 +23,8 @@ for await (const conn of server) {
 async function serveHttp(conn: Deno.Conn) {
 
   const httpConn = Deno.serveHttp(conn);
+
+  // Query GraphQL API
   for await (const requestEvent of httpConn) {
     const res = await fetch(graphApi, {
       body: JSON.stringify({ query }),
@@ -25,7 +32,8 @@ async function serveHttp(conn: Deno.Conn) {
       headers: { 'Content-Type': 'application/json' }
     })
     const answer = await res.json();
-    
+
+    // Initialize RSS XML
     let body = `<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel>
     <title>Juicebox Projects</title>
     <link>http://juice-rss.deno.dev/</link>
@@ -33,6 +41,7 @@ async function serveHttp(conn: Deno.Conn) {
     <language>en-us</language>
     <atom:link href="http://juice-rss.deno.dev/" rel="self" type="application/rss+xml"/>`;
     
+    // Add items
     for(const { projectId, metadataUri, createdAt, owner } of answer.data.projects){
       const ipfsRes = await fetch(`${metadataApi}/${metadataUri}`);
       const metadata = await ipfsRes.json();
@@ -51,8 +60,10 @@ async function serveHttp(conn: Deno.Conn) {
       </item>`
     }
 
+    // Close RSS XML
     body += `</channel></rss>`;
 
+    // XML Response
     requestEvent.respondWith(
       new Response(body, {
         status: 200,
