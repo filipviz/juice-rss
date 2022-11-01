@@ -1,10 +1,9 @@
-const server = Deno.listen({ port: 8888 });
-console.log(`HTTP webserver running.  Access it at:  http://localhost:8888/`);
+const server = Deno.listen({ port: 80 });
 
 const metadataApi = `https://jbx.mypinata.cloud/ipfs`
 const graphApi = 'https://api.studio.thegraph.com/query/30654/mainnet-dev/0.5.0'
 const query = `{
-  projects(first: 10, orderBy: createdAt, orderDirection: desc){
+  projects(first: 5, orderBy: createdAt, orderDirection: desc){
     projectId
     metadataUri
     createdAt
@@ -29,11 +28,10 @@ async function serveHttp(conn: Deno.Conn) {
     
     let body = `<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel>
     <title>Juicebox Projects</title>
-    <link>https://juicebox.money/</link>
+    <link>http://juice-rss.deno.dev/</link>
     <description>Latest projects on juicebox.money</description>
     <language>en-us</language>
-    <lastBuildDate>Mon, 01 Jun 2020 16:16:24 +0200</lastBuildDate>
-    <atom:link href="https://juicebox.money/index.xml" rel="self" type="application/rss+xml"/>`;
+    <atom:link href="http://juice-rss.deno.dev/" rel="self" type="application/rss+xml"/>`;
     
     for(const { projectId, metadataUri, createdAt, owner } of answer.data.projects){
       const ipfsRes = await fetch(`${metadataApi}/${metadataUri}`);
