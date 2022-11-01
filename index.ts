@@ -43,17 +43,20 @@ async function serveHttp(conn: Deno.Conn) {
     
     // Add items
     for(const { projectId, metadataUri, createdAt, owner } of answer.data.projects){
+      // Fetch IPFS metadata
       const ipfsRes = await fetch(`${metadataApi}/${metadataUri}`);
       const metadata = await ipfsRes.json();
+
+      // Add item
       body += `<item>
-      <title>${metadata.name}</title>
+      <title>${projectId}: ${metadata.name}</title>
       <link>https://juicebox.money/v2/p/${projectId}/</link>
-      <description>
-        Description: ${metadata.description}&lt;br&gt;&lt;br/&gt;
-        Disclosure: ${metadata.payDisclosure}&lt;br/&gt;&lt;br/&gt;
-        &lt;a href='https://twitter.com/${metadata.twitter}'&gt;Twitter: @${metadata.twitter} &lt;/a&gt;
-        &lt;a href='${metadata.discord}'&gt;Discord: ${metadata.discord}&lt;/a&gt;&lt;br/&gt;
-      </description>
+      <description>`
+      if(metadata.description){ body += `Description: ${metadata.description}&lt;br&gt;&lt;br/&gt;`; }
+      if(metadata.payDisclosure){ body += `Disclosure: ${metadata.payDisclosure}&lt;br/&gt;&lt;br/&gt;`; }
+      if(metadata.twitter){ body += `Twitter: &lt;a href='https://twitter.com/${metadata.twitter}'&gt;@${metadata.twitter} &lt;/a&gt;`; }
+      if(metadata.discord){ body += `Discord: &lt;a href='${metadata.discord}'&gt;${metadata.discord}&lt;/a&gt;`; }
+      body += `</description>
       <author>${owner}</author>
       <guid>${projectId}</guid>
       <pubDate>${new Date(createdAt * 1000).toISOString()}</pubDate>
