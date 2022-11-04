@@ -4,7 +4,7 @@ const server = Deno.listen({ port: 8080 });
 const metadataApi = 'https://jbx.mypinata.cloud/ipfs';
 
 // ENS GraphQL Endpoint
-// const ensUrl = 'https://api.thegraph.com/subgraphs/name/ensdomains/ens'
+const ensUrl = 'https://api.thegraph.com/subgraphs/name/ensdomains/ens'
 
 // GraphQL API
 const graphApi = 'https://api.studio.thegraph.com/query/30654/mainnet-dev/0.5.0';
@@ -53,28 +53,28 @@ async function serveHttp(conn: Deno.Conn) {
       const metadata = ipfsRes.ok ? await ipfsRes.json() : null;
 
       // Fetch ENS
-//       const ensQuery = `{ 
-//   domains(where: {resolvedAddress: "${owner.toLowerCase()}"}){
-//     name 
-//   }
-// }`;
-//      console.log(ensQuery);
-//      const ensRes = await fetch(ensUrl, {
-//        body: JSON.stringify({ ensQuery }),
-//        method: 'POST',
-//        headers: { 'Content-Type': 'application/json' },
-//      })
-//      console.log(ensRes);
-//      console.log(ensRes.json());
-//      const ensData = await ensRes.json();
-//      console.log(ensData);
+      const query = `{ 
+  domains(where: {resolvedAddress: "${owner.toLowerCase()}"}){
+    name 
+  }
+}`;
+     const ensRes = await fetch(ensUrl, {
+       body: JSON.stringify({ query }),
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+     })
+     const ensData = (await ensRes.json()).data;
 
       // Add item
       body += `<item>
       <title>${projectId}: ${metadata?.name}</title>
       <link>https://juicebox.money/v2/p/${projectId}/</link>
-      <description>Current balance: ${currentBalance / 1000000000000000000 } ETH&lt;br&gt;`
-      if(handle){ body += `Handle: ${handle}&lt;br&gt;`; }
+      <description>Current balance: ${currentBalance / 1000000000000000000 } ETH&lt;br&gt;
+      Owner Address: ${owner}&lt;br&gt;`
+      if(ensData.domains[0])
+        for(const { name } of ensData.domains)
+          body += `Owner ENS: ${name}&lt;br&gt;`
+      if(handle){ body += `Project Handle: ${handle}&lt;br&gt;`; }
       if(!metadata){
         body += `Could not resolve project metadata.&lt;br&gt;`;
       } else {
@@ -83,10 +83,12 @@ async function serveHttp(conn: Deno.Conn) {
         if(metadata.twitter){ body += `Twitter: &lt;a href='https://twitter.com/${metadata.twitter}'&gt;@${metadata.twitter}&lt;/a&gt;`; }
         if(metadata.discord){ body += ` Discord: &lt;a href='${metadata.discord}'&gt;${metadata.discord}&lt;/a&gt;`; }
       }
-      // body += (ensData.data.name ? `<author>${ensData.data.name}</author>` : `<author>${owner}</author>`)
-      body += `</description>
-      <author>${owner}</author>
-      <guid>${projectId}</guid>
+      body += `</description>`;
+      if(ensData.domains[0])
+        body += `<author>${ensData.domains[0].name}</author>`;
+      else
+        body +=  `<author>${owner}</author>`;
+      body += `<guid>${projectId}</guid>
       <pubDate>${new Date(createdAt * 1000).toISOString()}</pubDate>
       </item>`;
     }
