@@ -1,7 +1,7 @@
 const server = Deno.listen({ port: 8080 });
 
 // IPFS Gateway
-const metadataApi = 'https://jbx.mypinata.cloud/ipfs';
+const metadataApi = 'https://ipfs.io/ipfs';
 
 // ENS GraphQL Endpoint
 const ensUrl = 'https://api.thegraph.com/subgraphs/name/ensdomains/ens'
